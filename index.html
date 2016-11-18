@@ -220,6 +220,7 @@ hello
 <h1>Day 3: Maybe</h1>
 <h2>Mini-lists. Or mini-exceptions.</h2>
 
+<pre>
 see Maybe as a limited form of list:
 it can be zero or one elements:
 
@@ -243,7 +244,8 @@ f :: a -> b
 fmap f (maybeToList l) = maybeToList (fmap f l)
  :: Maybe b
 
-DRAW A NICE COMMUTING DIAGRAM HERE
+DRAW A NICE COMMUTING DIAGRAM HERE.
+Mention Natural Transformation between Functors.
 
 but what about if we treat it as a monad?
 we don't get the same results out...
@@ -261,17 +263,114 @@ fail _ = Nothing
 
 -- we lose any exception information which is why I 
 call them "mini-exceptions"
+</pre>
 
 </div>
 
 <div class="slide">
 <h1>Day 4: Reader, Writer, State</h1>
 <h2>wiring together functions</h2>
+
+<pre>
+[] and Maybe are "data structure" monad
+
+IO is an Interacting-with-the-world monad
+
+reader,writer,state are familair
+
+these are "wiring function inputs/outputs together"
+monads...
+
+state threads a state thread as an extra parameter
+to each function
+
+reader threads an environment in to each function
+without letting them modify it
+
+writer takes some output from each function and
+somehow combines all those outputs (eg as a Monoid)
+
+is there much more to say?
+
+</pre>
 </div>
 
 <div class="slide">
 <h1>Day 5: Set</h2>
 <h2>these are harder than you’d first expect</h2>
+
+<pre>
+this is probably the first unfamiliar monad.
+
+i was going to write that you can't do this, and explain
+why.. but then I found someone had made an implementation.
+
+so first why you can't do this. and then why you can.
+
+1. Why can't you make a set monad?
+
+superficially a set seems quite like a list.
+it's a container of some values .
+
+the difference is just that a list is sequenced and
+can have duplicates. a set is unordered and cannot
+contain duplicates.
+
+how does that affect things?
+
+the constructor for list is sort of:
+
+data List a = Cons a (List a) | Nil
+- an algebraic data type.
+
+set doesn't work that way - you can't
+make a definition like the above for
+a set.
+
+Data.Set instead has smart constructors - 
+you can construct sets with things like
+"singleton" and "empty" and combine them
+with "union" and "intersection" which
+are trusted (outside of the type system)
+to do the right thing.
+
+We can always make a single value into a
+set, no matter what its' type:
+
+singleton :: a -> Set a
+
+but if we want to combine sets:
+
+union :: Ord a => Set a -> Set a -> Set a 
+
+we need some additional properties on 'a'
+to be able to make sure we don't get
+duplicates.
+
+We don't have that for arbitary sets!
+
+So we can't write, for example, fmap:
+
+theoretically:
+s = {1,2,3}
+fmap (const k) s = {k}
+
+but we can't compare k == k for
+arbitrary types T, k :: T
+
+so we can't build fmap. and we can't
+build join (which would take the union
+to give:
+(Set (Set T)) -> Set T
+
+So we can't do fmap. we can't do join.
+so we can't have Monad.
+
+1. How you can make a set monad.
+
+set-monad package.
+
+</pre>
 </div>
 
 <div class="slide">
