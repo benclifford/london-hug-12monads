@@ -215,9 +215,53 @@ hello
 
 </pre>
 </div>
+
 <div class="slide">
 <h1>Day 3: Maybe</h1>
 <h2>Mini-lists. Or mini-exceptions.</h2>
+
+see Maybe as a limited form of list:
+it can be zero or one elements:
+
+[]  <---> Nothing
+[v] <---> Just v
+
+this doesn't lose information:
+maybeToList :: Maybe a -> [a]
+
+but this does lose information:
+listToMaybe :: [a] -> Maybe a
+
+listToMaybe is aka safe head
+ - it loses the tail of the list.
+
+bit of category theory:
+fmap commutes with maybeToList:
+
+l :: [a]
+f :: a -> b
+fmap f (maybeToList l) = maybeToList (fmap f l)
+ :: Maybe b
+
+DRAW A NICE COMMUTING DIAGRAM HERE
+
+but what about if we treat it as a monad?
+we don't get the same results out...
+
+list explores all options of all options (list of list)
+maybe only explores one option, and one option of that.
+
+
+and that way, it's like mini-exceptions:
+we can either return one thing at each stage, or we can "fail"
+... and the monad fail instance is Nothing
+    in Maybe:
+
+fail _ = Nothing
+
+-- we lose any exception information which is why I 
+call them "mini-exceptions"
+
 </div>
 
 <div class="slide">
