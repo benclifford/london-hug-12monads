@@ -1,30 +1,294 @@
 <html>
+
+
+<head>
+ <meta charset="utf-8"/>
+<title>12 Monads of Christmas preview talk</title>
+
+<link rel="stylesheet" href="highlight.js/styles/default.css">
+<script src="highlight.js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+<link rel="stylesheet" href="Slidy2/styles/slidy.css" type="text/css" />
+<script src="Slidy2/scripts/slidy.js" charset="utf-8" type="text/javascript"></script> 
+</head>
+
 <body>
-<h1>12 monads of christmas</h1>
 
-<h2>Day 1 IO — our ugly friend</h2>
-<hr>
-<h2>Day 2 [] — seeing the rest of a program run</h2>
-<hr>
-<h2>Day 3 Maybe — Mini-lists. Or mini-exceptions.</h2>
-<hr>
-<h2>Day 4 Reader Writer State — wiring together functions</h2>
-<hr>
-<h2>Day 5 Set — these are harder than you’d first expect</h2>
-<hr>
-<h2>Day 6 Conduit — piping together computations</h2>
-<hr>
-<h2>Day 7 Haxl —The Reader monad, when reads are expensive</h2>
-<hr>
-<h2>Day 8 LogicT — more interesting stuff with evaluating lists</h2>
-<hr>
-<h2>Day 9 Free — free monads</h2>
-<hr>
-<h2>Day 10 Eff — extensible effects</h2>
-<hr>
-<h2>Day 11 Key — typesafe dynamic typing</h2>
-<hr>
-<h2>Day 12 Cont — continuations</h2>
-<hr>
+<div class="slide">
+<h1>12 Monads of Christmas</h1>
+<h2>a preview</h2>
+<ul>
+<li>Ben Clifford</li>
+<li>benc@hawaga.org.uk</li>
+</div>
 
-</html></h2>
+<div class="slide">
+<li>I was thinking about doing a blog series post</li>
+<li>"12 monads of christmas"</li>
+<li>which is 12 blog posts about monads...</li>
+<li>and this talk is a preview of that.</li>
+<li>Each day is a monad (or more) and something I think
+is interesting about/around that monad.</li>
+
+</div>
+
+<div class="slide">
+<h1>Day 1: IO</h1>
+<h2>our ugly friend</h2>
+
+<pre>
+most people write stuff in IO. it's the type of main,
+for example.
+
+do notation
+
+easy to think you are telling "haskell" 'do' these things
+in order, when you write a 'do' expression.
+
+you aren't.
+
+p :: IO ()
+p = 
+do
+  v <- a
+  b v
+
+is "just an expression" or "just a value"
+
+
+x = (p, undefined)
+y = [x,x,x]
+z = fst $ head y
+just like we might do with an integer.
+
+compare this to basic
+
+10 INPUT A$
+20 PRINT A$
+
+which we can't really manipulate (other than SAVE and LOAD to/from disk.)
+
+finally we can run that value that we've been playing with...
+main = z
+
+now lets think about the structure of p.
+
+do notations again. desugars into:
+
+p = a >>= \v -> b v
+p = a >>= b
+
+which is an application of >>= to two parameters:
+
+>>= is "in charge" here, to make a new expression of type 'IO something'
+
+we can think of do notation as:
+
+do
+  v <- a
+  rest_of_program
+
+like this:
+
+a >>= \v -> rest_of_program
+
+and in a monad that usually means something like
+'do' the the LHS and feeding in the value from that, 'do' the rest of the program (RHS)
+
+? could bracked out a multi-line do block to show who gets to be in charge?
+
+"Haskell" doesn't decide what this means.
+The implementation around the IO type (via >>=) gets to decide.
+
+
+</pre>
+
+</div>
+
+<div class="slide">
+<h1>Day 2: []</h1>
+<h2>seeing the rest of a program run</h2>
+
+<pre>
+here's something that looks completely different:
+
+> [ x * y | x <- [1,2,3], y <- [10,100] ]
+[10,100,20,200,30,300]
+
+or not so different:
+
+do
+  x <- [1,2,3]
+  y <- [10,100]
+  return (x * y)
+
+let's force that into previous form:
+  do
+    v <- a
+    b v
+
+-- the first thing to 'do'
+a = [1,2,3] -- not an IO action any more... the thing to 'do' is a list (?!)
+
+-- the rest of the program
+b v = do
+  y <- [10,100]
+  return (x*y)
+
+
+but theres a different way to describe monads, using fmap (from Functor) and
+
+join :: m (m a) -> m a
+
+Equivalent to the >>= way of doing things.
+
+I find this easiest to visualise with lists:
+
+start with list a:
+
+a = [1,2,3]
+
+and run the rest of the program, assuming we've chosen each element in turn in
+the list:
+
+
+> fmap b a
+[[10,100] , [20,200], [30,300]] :: [[Int]]
+
+Nothing monadic yet - we've only used Functor.
+
+We've got a list that contains what the rest
+of the program would have done if we'd made
+particular choices when we "did" the first
+step of the program.
+
+How do we get from 
+
+[[10,100] , [20,200], [30,300]]
+to
+
+[10,100,20,200,30,300]
+?
+
+In [], that's concat. Or more generally,
+that is what 'join' is.
+
+So let's look at what that looks like for
+IO:
+
+do
+  v <- getLine
+  putStr v
+
+==
+getLine :: IO String
+putStr :: String -> IO ()
+fmap putStr getLine :: IO (IO ())
+
+it's an IO action that when we run it,
+will: read a line, and then return an
+IO action that is the rest of the program,
+passed that line:
+
+Prelude> a <- fmap putStrLn getLine
+> hello -- type this in
+Prelude> :t a
+a :: IO ()
+
+and now we have "the rest of the program", captured
+in a variable 'a',
+that we can run:
+
+Prelude> a
+hello -- output
+
+and run several times if we like:
+
+Prelude> a
+hello
+Prelude> a
+hello
+Prelude> a
+hello
+
+
+</pre>
+</div>
+<div class="slide">
+<h1>Day 3: Maybe</h1>
+<h2>Mini-lists. Or mini-exceptions.</h2>
+</div>
+
+<div class="slide">
+<h1>Day 4: Reader, Writer, State</h1>
+<h2>wiring together functions</h2>
+</div>
+
+<div class="slide">
+<h1>Day 5: Set</h2>
+<h2>these are harder than you’d first expect</h2>
+</div>
+
+<div class="slide">
+<h1>Day 6: Conduit</h1>
+<h2>piping together computations</h2>
+</div>
+
+<div class="slide">
+<h1>Day 7: Haxl</h1>
+<h2>The Reader monad, when reads are expensive</h2>
+</div>
+
+<div class="slide">
+<h1>Day 8: LogicT</h1>
+<h2>more interesting stuff with evaluating lists</h2>
+</div>
+
+<div class="slide">
+<h1>Day 9: Free</h1>
+<h2>Free monads</h2>
+</div>
+
+<div class="slide">
+<h1>Day 10:  Eff</h1>
+<h2>modular interpreters and extensible effects</h2>
+</div>
+
+<div class="slide">
+<h1>Day 11: Key</h1>
+<h2>safe dynamic typing</h2>
+</div>
+
+<div class="slide">
+<h1>Day 12: Cont</h1>
+<h2>continuations</h2>
+</div>
+
+<div class="slide">
+<p>-fin-</p>
+
+<p><a href="https://www.meetup.com/London-Haskell/events/235629296/">meetup.com event</a></p>
+
+
+</div>
+
+
+<div class="slide">
+<h1>example of haskell code markup</h1>
+<pre><code class="haskell">want     [ jsdir &lt;/> "all.css"
+         , jsdir &lt;/> "all.css.gz"
+         , jsdir &lt;/> "all.min.js"
+         , jsdir &lt;/> "all.min.js.gz"
+         ]
+
+"//*.min.js" %> minify
+"//*.gz" %> compress
+-- NO DEPENDENCIES WRITTEN HERE!
+
+(jsdir &lt;/> "all.js") %> combineJS jsdir
+(jsdir &lt;/> "all.css") %> combineCSS jsdir 
+-- OR HERE!
+</code></pre></div>
+
+</html>
