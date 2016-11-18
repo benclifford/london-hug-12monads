@@ -363,12 +363,31 @@ build join (which would take the union
 to give:
 (Set (Set T)) -> Set T
 
+a specific example is  T = Int -> String.
+because functions are not comparable:
+
 So we can't do fmap. we can't do join.
 so we can't have Monad.
 
-1. How you can make a set monad.
+
+TODO: need a specific example that doesn't
+work in this style.
+
+This one, for example, doesn't seem to need
+any set de-duplication...
+do 
+  f <- return SOMEFUNC
+  b <- {1,2,3}
+  f b
+
+
+2. How you can make a set monad.
 
 set-monad package.
+
+We'll have to do something differently...
+
+
 
 </pre>
 </div>
