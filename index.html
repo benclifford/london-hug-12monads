@@ -490,7 +490,7 @@ special case singleton sets (without).
 <div class="slide">
 <h1>Day 6: Conduit</h1>
 <h2>piping together computations</h2>
-
+<pre>
 Conduits let you pipe together streams of data with more
 control over resource usage than doing lazy IO.
 
@@ -546,12 +546,97 @@ example:
   any of this
 
  we get composability
-
+</pre>
 </div>
 
 <div class="slide">
 <h1>Day 7: Haxl</h1>
 <h2>The Reader monad, when reads are expensive</h2>
+
+<pre>
+
+it's a monad. but the interesting stuff happens when
+you use it as an applicative functor.
+
+applicative functor is somewhere between 
+
+* a functor (which gives you `fmap`)
+
+* and a monad, which gives you:
+ join, >>= (bind), return
+
+Applicative has fmap, and <*> "apply"
+
+  (<*>) :: f (a -> b) -> f a -> f b
+
+Like monad, there's another formulation:
+
+  (**) :: f a -> f b -> f (a,b)
+
+We do "do" two things in an applicative f and
+then somehow combine them.
+
+But we are restricted in how the LHS can inflence
+the RHS - the RHS can't see the value that's come
+out of the LHS, but the values get stuck together
+at the end (using function composition in the
+first case or (,) in the second case.
+
+so back to haxl.
+
+When you're a client of haxl, you can execute a
+query against some data source.
+
+That query might take a long time because of
+eg network/database latency.
+
+monadic style:
+
+report n a = putStrLn $ "Your name is " ++ name ++ " and your age is " ++ show age
+
+do
+  name <- getName - 500ms
+  age <- getAge person -- 500ms
+  report name age
+
+total run time 1 second.
+
+But we could have run getName and getAge in parallel - we didn't
+need to know the value of "name" in order to run
+getAge person.
+
+but the monadic interface means we have to do that - we have
+to pass on the value of "name" even though on visual
+inspection it doesn't matter until much later.
+
+but this is what applicatives provide!
+
+rather than
+
+  getname >>= \name -> getAge >>= \age -> report name age
+
+we could instead write something like:
+
+ do
+  (name,age) <- (,) <$> getName <*> getAge
+  report name age
+
+so we've got a monadic step still, but one of the
+actions is both queries at the same time.
+
+In ghc 8, there's applicative-do, which means that
+do notation gets desugared into applicative where
+possible - the results should evaluate to be the
+same (as long as the applicative and monad instances
+work together properly)
+
+There are also things that can't be monads, that can
+be applicatives.
+
+For example, ZipList.
+
+
+</pre>
 </div>
 
 <div class="slide">
