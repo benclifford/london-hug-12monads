@@ -369,26 +369,121 @@ because functions are not comparable:
 So we can't do fmap. we can't do join.
 so we can't have Monad.
 
+1b
+concrete examples:
 
-TODO: need a specific example that doesn't
-work in this style.
+:t singleton (5 :: Integer) 
+singleton (5 :: Integer) :: Set Integer
 
-This one, for example, doesn't seem to need
-any set de-duplication...
-do 
-  f <- return SOMEFUNC
-  b <- {1,2,3}
-  f b
+*Main Lib Data.Set> let a = singleton (5 :: Integer) 
+*Main Lib Data.Set> let b = singleton (7 :: Integer) 
 
+*Main Lib Data.Set> a `union` b
+fromList [5,7]
+
+*Main Lib Data.Set> a `union` a
+fromList [5]
+
+some kind of "Eq" testing going on there ^
+
+*Main Lib Data.Set> fmap abs [-5,-3,1,3,7]
+[5,3,1,3,7]
+
+What should fmap be on set?
+
+fmap abs { -5, -3 , 1, 3, 7 } => { 5,3,1,7 }
+
+so someting like this on list:
+
+*Main Lib Data.Set Data.List> nub $ fmap abs [-5,-3,1,3,7]
+[5,3,1,7]
+
+but:
+
+*Main Lib Data.Set Data.List> nub [abs :: Integer -> Integer]
+    • No instance for (Eq (Integer -> Integer))
+
+so we can't always implement it that way.
 
 2. How you can make a set monad.
 
-set-monad package.
+See the <a href="https://hackage.haskell.org/package/set-monad">set-monad</a> package.
 
-We'll have to do something differently...
+import Data.Set.Monad
+:t fmap abs (fromList [-5,-3,1,3,7 :: Integer]) fmap abs (fromList [-5,-3,1,3,7 :: Integer]) :: Set Integer
+*Main Lib Data.Set.Monad> fmap abs (fromList [-5,-3,1,3,7])
+fromList [1,3,5,7]
+
+ do { a <- fromList [0,1,2] ; b <- fromList [0,1,2] ; return $ a + b} :: Set Integer
+fromList [0,1,2,3,4]
+
+cf
+*Main Lib Data.Set.Monad> do { a <- [0,1,2] ; b <- [0,1,2] ; return $ a + b} :: [Integer]
+[0,1,2,1,2,3,2,3,4]
+
+*Main Lib Data.Set.Monad> let f = id :: Integer -> Integer
+*Main Lib Data.Set.Monad> let g = abs :: Integer -> Integer
+*Main Lib Data.Set.Monad> :t [f,g]
+[f,g] :: [Integer -> Integer]
+
+*Main Lib Data.Set.Monad> [b a | a <- [1,2,3], b <- [f,g]]
+[1,1,2,2,3,3]
+or this
+*Main Lib Data.Set.Monad> do { a <- [-3,1,3 :: Integer] ; b <- [f,g] ; return (b a) }
+[-3,3,1,1,3,3]
+
+*Main Lib Data.Set.Monad> :set -XMonadComprehensions
+
+however we can't do things that don't make sense:
+
+*Main Lib Data.Set.Monad> let funcs = fromList [f,g]
+
+<interactive>:26:13: error:
+    • No instance for (Ord (Integer -> Integer))
+
+*Main Lib Data.Set.Monad> let f1 = return f :: Set (Integer -> Integer)
+*Main Lib Data.Set.Monad> :t f1
+f1 :: Set (Integer -> Integer)
+
+f1 is a set of functions (but only one element)
+
+*Main Lib Data.Set.Monad> do { a <- fromList [-3,1,3 ::Integer]; b <- f1 ; return $ b a }
+fromList [-3,1,3]
+
+but magically restricted in what we can do with that set:
+
+*Main Lib Data.Set.Monad> f1 `union` f1
+
+<interactive>:43:1: error:
+    • No instance for (Ord (Integer -> Integer))
+        arising from a use of ‘union’
 
 
+We've moved constraints around so instead of being on the
+data type of Set, they're on the various operations that need
+them.
 
+So you can always make a one element set out of a single
+value, no constraints needed. (return f)
+
+and you can use that in a monadic context (b <- f1)
+ - we're going to iterate over all the values but theres only one.
+
+but not intersection/union
+
+The constructors for Data.Monad.Set distinguish between these
+two cases:
+
+<a href="https://hackage.haskell.org/package/set-monad-0.2.0.0/docs/src/Data-Set-Monad.html#Set">from the source code</a>:
+
+data Set a where
+  Prim   :: (Ord a) => S.Set a -> Set a
+  Return :: a -> Set a
+
+you can have a regular set (with Ord constraint) or one of these
+special case singleton sets (without).
+
+(This is a free monad, and we'll come to those later)
 </pre>
 </div>
 
