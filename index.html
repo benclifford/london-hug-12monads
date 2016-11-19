@@ -755,8 +755,28 @@ operator on lists, so why do we need LogicT?
 
 LogicT provides other stuff...
 it's a transformer over arbitrary monads. (I think it's hard to do backtracking fairly over arbitrary monads?)
-* other stuff like cut.
 
+ * ifte - soft cut:
+
+  ifte t th el  - if t succeeds at least once,  t >>= th
+                  if t never succeeds, el
+  (so el is our "else" / "error handling" / explain why we
+    failed here...)
+
+ * once - pruning
+   once a   - selects a single solution from a - it never backtracks
+     to select any others.
+    - for example, when looking for a counter example, there might
+       be many counter examples, but we really only care about finding
+       any one of them, rather than enumerating all of them.
+    but we can do this within our backtracking computation.
+    (rather than external to it, which is where head/observe live
+
+these operators are able to do things that list doesn't: they
+can observe what's happening to the non-deterministic 
+evaluation in a way that something living in [] cannot.
+  - observations on the computation as a whole live outside like
+  head.
 
 </pre>
 
@@ -802,6 +822,67 @@ implementations.
 <div class="slide">
 <h1>Day 12: Cont</h1>
 <h2>continuations</h2>
+
+<pre>
+Continuations represent the rest of the
+program to be run.
+
+But wait, we've seen this somewhere before...
+
+Right back at the start.
+
+A monad gives us expressions that look like this:
+
+ action >>= rest_of_program
+
+we can do an action, and then we pass in the rest
+of the program to be run, and the monad implementation
+makes the rest of the program happen.
+(perhaps several times or never, like in a list - it
+doesn't matter - it's available to the monad
+implementation to do what it cares to)
+
+Cont makes "the rest of the program" available inside
+your monadic code, with a single action:
+
+
+callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
+
+Cont r a is a computation that will at the very end of the
+program return a value of type r, but this particular piece
+of computation will return a value of type a.
+
+Run it with runCont (or runContT in this case)
+
+callCC action  means "don't run the rest of the program.
+Run action instead. (This isn't a function call - when
+action exits, we don't return to where callCC was invoked).
+
+BUT! action gets passed the rest of the program as a parameter.
+
+and that parameter is itself a monadic action we can call which
+will abandon whatever program is running and go back and
+carry on as if we'd just returned from the callCC.
+
+Sound confusing? It is. It's like the GOTO of functional programming...
+
+We can do things like "early return" - like the return statement
+of C/Java - but we can return from deep inside. so that bit
+is quite like throwing an exception rather than returning.
+
+or we could store the continuation in a table for use later on
+-- to implement co-routines or a co-operative multitasking
+scheduler. or for use as a callback: go stop what i'm doing now
+and "return" (via the continuation) to carry on when you have
+whatever the callback is for.
+
+very powerful. very confusing.
+
+i've used it once for a DNS query program which was non-deterministic
+over DNS caches - DNS caching looks weird so a regular list-style
+non-determinism wasn't good enough.
+</pre>
+
 </div>
 
 <div class="slide">
