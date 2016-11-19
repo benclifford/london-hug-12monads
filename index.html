@@ -490,6 +490,63 @@ special case singleton sets (without).
 <div class="slide">
 <h1>Day 6: Conduit</h1>
 <h2>piping together computations</h2>
+
+Conduits let you pipe together streams of data with more
+control over resource usage than doing lazy IO.
+
+We've got sources (which generate data for piping),
+sinks (which take data for piping) and more general
+conduits which sink some data and source some data.
+
+I'm going to do all this in Conduit over IO - Conduit itself
+is a monad transformer.
+
+*Main Lib Data.Conduit> generator = yield 3
+
+*Main Lib Data.Conduit Control.Monad.IO.Class> printer = do { v <- await; liftIO $ putStrLn $ "We got: " ++ (show v) }
+
+*Main Lib Data.Conduit Control.Monad.IO.Class> runConduit (generator .| printer)
+We got: Just 3
+
+or we can do:
+
+*Main Lib Data.Conduit Control.Monad.IO.Class> printer3 = printer >> printer >> printer
+*Main Lib Data.Conduit Control.Monad.IO.Class> runConduit (generator .| printer3)
+We got: Just 3
+We got: Nothing
+We got: Nothing
+
+.| aka `fuse`
+
+draw nice diagram - fusing horizontally
+
+monadic composition vertically - three x printer, for example.
+
+So how is this useful?
+
+* better resource control. can pass values round one at a time,
+rather than building a list of all values and hoping that it
+is dealt with suitably lazily.
+
+* interleave actions in underlying monad with conduit behaviour
+ - hard to do with lists.
+
+introduce conduitm and some specialisations:
+   source (no input)
+   sink (no output)
+   conduit (no return value)
+
+
+example:
+ source can do dsomething complicated - http request for paged
+   data, which involves getting a page, yielding all the records
+   on that page, then getting next page, etc.
+
+ sink can "await" next record, without needing to co-ordinate
+  any of this
+
+ we get composability
+
 </div>
 
 <div class="slide">
@@ -505,6 +562,13 @@ special case singleton sets (without).
 <div class="slide">
 <h1>Day 9: Free</h1>
 <h2>Free monads</h2>
+back reference to Set (maybe set should be right before this and
+smooth transition in?) - capture the structure of the computation
+in a data structure - show full data type for Data.Monad.Set
+and separately have a "run" function that runs that particular
+set. and it's at the run stage that we get our type errors, not
+at our construction stage. potentially we could have a different
+run function!
 </div>
 
 <div class="slide">
