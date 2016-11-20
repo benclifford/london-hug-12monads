@@ -757,8 +757,13 @@ a bit like monadplus, but "fairer":
 interleave could have been implemented as a different ++ style
 operator on lists, so why do we need LogicT?
 
+
 LogicT provides other stuff...
 it's a transformer over arbitrary monads. (I think it's hard to do backtracking fairly over arbitrary monads?)
+
+What does it mean to `mplus` two IO actions, for example?
+
+Can phrase in terms of (pure) lists quite easily.
 
  * ifte - soft cut:
 
