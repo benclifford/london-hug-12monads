@@ -488,6 +488,10 @@ you can have a regular set (with Ord constraint) or one of these
 special case singleton sets (without).
 
 (This is a free monad, and we'll come to those later)
+
+(btw i discovered there is a thing,
+<a href="https://blog.acolyer.org/2014/11/06/the-boom-hierarchy/">The Boom Hierarchy</a>
+and a term "ringad" for collection-like monads)
 </pre>
 </div>
 
@@ -817,6 +821,14 @@ implementations.
 <div class="slide">
 <h1>Day 11: Key</h1>
 <h2>safe dynamic typing</h2>
+
+
+
+http://www.cse.chalmers.se/~atze/papers/keymonad.pdf
+also see:
+https://www.seas.upenn.edu/~sweirich/papers/wadlerfest2016.pdf
+for similar stuff
+
 </div>
 
 <div class="slide">
@@ -876,10 +888,16 @@ scheduler. or for use as a callback: go stop what i'm doing now
 and "return" (via the continuation) to carry on when you have
 whatever the callback is for.
 
+or look at funcD - we don't even have to run the rest of the
+program. we can just ignore it and go run some arbitrary
+code, and when that arbitrary code ends, that's the end of
+runContT - we never get back to contMain.
+
 very powerful. very confusing.
 
 i've used it for a DNS diagnostic program which was non-deterministic
-over DNS caches and servers- DNS caching looks weird so a regular list-style
+over DNS caches and servers 
+- DNS caching looks weird so a regular list-style
 non-determinism wasn't good enough.
 </pre>
 

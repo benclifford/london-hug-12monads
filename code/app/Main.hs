@@ -18,6 +18,8 @@ contMain = do
   z <- callCC funcC
   trace $ "contMain: funcC returned " ++ show z
 
+  funcD
+
   trace "contMain finished"
 
 funcA = do
@@ -46,5 +48,8 @@ funcC2 return' = do
   return' 21
   trace "funcC2 - step 2"
 
+funcD = do
+  trace "funcD - inside"
+  ContT (\rest -> putStrLn "funcD - step 2")
 
 trace = liftIO . putStrLn
