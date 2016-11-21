@@ -679,6 +679,9 @@ run (Bind (Return v) f) = run (f v)
 -- and with a Prim, we know that we have the constraints needed:
 run (Bind (Prim s) f) = S.foldl' S.union S.empty (S.map (run . f) s)
 </code></pre>
+<p>Only feed in "interesting" sets if we have Ord,
+and can only ask for the result if we have an Ord.
+</p>
 </div>
 
 <div class="handout">
