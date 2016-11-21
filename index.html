@@ -369,7 +369,102 @@ hello
 <div class="slide">
 <h1>Day 3: Maybe</h1>
 <h2>Mini-lists. Or mini-exceptions.</h2>
+
+<pre>
+[]   <====>   Nothing
+[v]  <====>   Just v
+</pre>
+
 </div>
+
+<div class="slide">
+
+<p>Natural transformations:</p>
+<pre><code class="haskell">
+(Functor f, Functor g) => f a -> g a
+
+maybeToList :: Maybe a -> [a]
+listToMaybe :: [a] -> Maybe a -- | aka safe head
+</code></pre>
+
+</div>
+
+<div class="slide">
+
+<p>Checking natural transformation laws:</p>
+<pre><code class="haskell">
+nt :: (Functor f, Functor g) => f a -> g a
+
+maybeToList :: Maybe a -> [a]
+listToMaybe :: [a] -> Maybe a
+
+func :: Integer -> Integer -- an arbitrary function
+func = abs
+
+quickCheck (\l -> ((fmap func) . listToMaybe) l == (listToMaybe . (fmap func)) l)
++++ OK, passed 100 tests.
+
+quickCheck (\m -> ((fmap func) . maybeToList) m == (maybeToList . (fmap func)) m)
+</code></pre>
+
+</div>
+
+<div class="slide">
+<p>Monad morphism</p>
+
+<p>Natural transformation + laws on monad instance:</p>
+
+<pre><code class="haskell">
+morph :: (Monad m, Monad n) => m a -> n a
+
+maybeToList :: Maybe a -> [a]
+listToMaybe :: [a] -> Maybe a
+</code></pre>
+<p>rule 1</p>
+<pre><code class="haskell">
+morph (return x) = return x
+
+*Main Lib Test.QuickCheck Data.Maybe> quickCheck (\(x :: Integer) -> listToMaybe (return x) == return x)
++++ OK, passed 100 tests.
+*Main Lib Test.QuickCheck Data.Maybe> quickCheck (\(x :: Integer) -> maybeToList (return x) == return x)
++++ OK, passed 100 tests.
+</code></pre>
+</div>
+
+<div class="slide">
+<p>Monad morphism</p>
+
+<p>Natural transformation + laws on monad instance:</p>
+
+<pre><code class="haskell">
+morph :: (Monad m, Monad n) => m a -> n a
+
+maybeToList :: Maybe a -> [a]
+listToMaybe :: [a] -> Maybe a
+</code></pre>
+<p>rule 2</p>
+<pre><code class="haskell">
+morph $ do v <- a
+           b v
+     == 
+do
+  v <- morph a
+  morph (b v)
+
+checkMorph morph b = quickCheck $ \a ->
+    (morph (do v <- a ; b v)) 
+ == (do v <- morph a ; morph (b v))
+
+-- use 'if' so that we're monadic, not just Functor
+*Main Lib Test.QuickCheck Data.Maybe> checkMorph maybeToList (\(v :: Integer) -> if v >= 5 then Just v else Nothing)
++++ OK, passed 100 tests.
+
+*Main Lib Test.QuickCheck Data.Maybe> checkMorph listToMaybe (\(v :: Integer) -> if v >= 5 then [v] else [])
+*** Failed! Falsifiable (after 7 tests and 4 shrinks):    
+[0,5]
+</code></pre>
+</div>
+
 
 <div class="handout">
 <pre>
