@@ -465,6 +465,17 @@ checkMorph morph b = quickCheck $ \a ->
 </code></pre>
 </div>
 
+<div class="slide">
+<p>only take one path - no non-determinism.</p>
+
+<p>but can abandon that path at any time with Nothing.
+don't backtrack. we've given up entirely.</p>
+
+<p>...like exceptions</p>
+<p>but "mini" exceptions because we don't return any "why"
+information</p>
+
+</div>
 
 <div class="handout">
 <pre>
@@ -553,6 +564,13 @@ RHS would prune, and then search.
 <div class="slide">
 <h1>Day 4: Reader, Writer, State</h1>
 <h2>wiring together functions</h2>
+<p>vs interacting with the world, or containers</p>
+<p>Not going to say much, but here's a law for
+reader monads:</p>
+<pre>m >> n = n</pre>
+<p>If we read a thing and then forget it, we might as
+well have not done it in the first place.</p>
+<p>(not for ReaderT)</p>
 
 </div>
 
@@ -596,7 +614,51 @@ underlying monad might do something observable.
 <div class="slide">
 <h1>Day 5: Set</h2>
 <h2>these are harder than you’d first expect</h2>
+<p>1. why you can't make a set monad</p>
+<p>2. how you can make a set monad</p>
 </div>
+
+<div class="slide">
+<h1>Day 5: Set</h2>
+<p>A Set functor, with fake notation:</p>
+
+<pre>
+s = {-1,-3,3,7} :: Set Integer
+
+fmap abs s = {1,3,7}
+</pre>
+
+<pre>instance Eq Integer
+instance Ord Integer</pre>
+</div>
+
+<div class="slide">
+<h1>Day 5: Set</h2>
+<p>... but evil programmer can pick any type
+to fmap with:</p>
+<pre>
+s = {-1,-3,3,7} :: Set Integer
+
+fmap (const id) s = {id} :: Set (String -> String)
+</pre>
+
+<pre>instance Eq (String -> String) -- !!!
+instance Ord (String -> String)</pre>
+<p>Can't enforce <code>Eq</code> / <code>Ord</code>
+for <code>fmap</code> / <code>>>=</code> / <code>join</code>
+</p>
+</div>
+
+<div class="slide">
+<h1>Day 5: Set</h2>
+<p>Can't enforce <code>Eq</code> / <code>Ord</code>
+for <code>fmap</code> / <code>>>=</code> / <code>join</code>
+</p>
+
+<p>... maybe we can put those constraints somewhere else?</p>
+</div>
+
+
 
 <div class="handout">
 <pre>
