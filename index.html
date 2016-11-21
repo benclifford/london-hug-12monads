@@ -302,6 +302,18 @@ somehow combines all those outputs (eg as a Monoid)
 
 is there much more to say?
 
+
+For Reader monad:
+
+  m >> n = n
+
+If we do a thing, then discard the result,
+it's the same as if we never did that first thing.
+-- we can't observe "reading" happening.
+
+This isn't the same for ReaderT, though because the
+underlying monad might do something observable.
+
 </pre>
 </div>
 
