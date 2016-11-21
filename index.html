@@ -37,6 +37,76 @@ is interesting about/around that monad.</li>
 <h1>Day 1: IO</h1>
 <h2>our ugly friend</h2>
 
+<pre><code class="basic">
+10 INPUT A$
+20 PRINT A$
+</code>
+</pre>
+</div>
+
+<div class="slide">
+<h1>Day 1: IO</h1>
+<h2>our ugly friend</h2>
+
+<pre><code class="haskell">
+main = do
+  v <- getLine
+  putStrLn v
+</code>
+</pre>
+</div>
+
+
+<div class="slide">
+<h1>Day 1: IO</h1>
+<h2>our ugly friend</h2>
+
+<pre><code class="haskell">
+main = snd (head l)
+
+l = [(3, a >>= b), undefined, (8, void)]
+
+a = getLine
+b = fst (putStrLn, putStrLn)
+
+</code>
+</pre>
+</div>
+
+<div class="slide">
+<h1>Day 1: IO</h1>
+<h2>our ugly friend</h2>
+
+<pre><code class="haskell">
+main =  getLine >>= \v ->
+        putStrLn v
+
+</code></pre>
+</div>
+
+<div class="slide">
+<h1>Day 1: IO</h1>
+<h2>our ugly friend</h2>
+
+<pre><code class="haskell">
+main =  (getLine) >>= (\v ->
+        putStrLn v)
+</code></pre>
+</div>
+
+<div class="slide">
+<h1>Day 1: IO</h1>
+<h2>our ugly friend</h2>
+
+<pre><code class="haskell">
+main = first_thing >>= rest_of_program
+
+first_thing = getLine
+rest_of_program v = putStrLn v
+</code></pre>
+</div>
+
+<div class="handout">
 <pre>
 most people write stuff in IO. it's the type of main,
 for example.
@@ -110,6 +180,86 @@ The implementation around the IO type (via >>=) gets to decide.
 <h1>Day 2: []</h1>
 <h2>seeing the rest of a program run</h2>
 
+<pre><code class="haskell">
+l = [ x * y | x <- [1,2,3], y <- [10,100] ]
+-- [10,100,20,200,30,300]
+</code></pre>
+
+</div>
+
+<div class="slide">
+<h1>Day 2: []</h1>
+<h2>seeing the rest of a program run</h2>
+
+<pre><code class="haskell">
+l = do
+  x <- [1,2,3]
+  y <- [10,100]
+  return (x * y)
+</code></pre>
+</div>
+
+<div class="slide">
+<h1>Day 2: []</h1>
+<h2>seeing the rest of a program run</h2>
+
+<pre><code class="haskell">
+l = first_thing >>= rest_of_program
+ where 
+  first_thing = [1,2,3]
+  rest_of_program v = do
+    y <- [10,100]
+    return (v * y)
+</code></pre>
+</div>
+
+
+<div class="slide">
+<h1>Day 2: []</h1>
+<h2>seeing the rest of a program run</h2>
+
+<pre><code class="haskell">
+first_thing = [1,2,3]
+rest_of_program v = do
+  y <- [10,100]
+  return (v * y)
+
+fmap rest_of_program first_thing
+-- [[10,100] , [20,200], [30,300]]
+
+join (fmap rest_of_program first_thing)
+-- [10,100,20,200,30,300]
+</code></pre>
+</div>
+
+<div class="slide">
+<h1>Day 2: []</h1>
+<h2>seeing the rest of a program run</h2>
+
+<pre><code class="haskell">
+first_thing :: IO String
+first_thing = getLine
+
+rest_of_program :: String -> IO ()
+rest_of_program v = putStrLn v
+
+prog :: IO (IO ())
+prog = fmap rest_of_program first_thing
+
+continue :: IO ()
+continue <- prog
+
+-- hands on demo?
+
+join (fmap rest_of_program first_thing)
+hello
+hello
+</code></pre>
+</div>
+
+
+
+<div class="handout">
 <pre>
 here's something that looks completely different:
 
@@ -134,7 +284,7 @@ a = [1,2,3] -- not an IO action any more... the thing to 'do' is a list (?!)
 -- the rest of the program
 b v = do
   y <- [10,100]
-  return (x*y)
+  return (v*y)
 
 
 but theres a different way to describe monads, using fmap (from Functor) and
@@ -219,7 +369,9 @@ hello
 <div class="slide">
 <h1>Day 3: Maybe</h1>
 <h2>Mini-lists. Or mini-exceptions.</h2>
+</div>
 
+<div class="handout">
 <pre>
 see Maybe as a limited form of list:
 it can be zero or one elements:
@@ -247,6 +399,13 @@ fmap f (maybeToList l) = maybeToList (fmap f l)
 DRAW A NICE COMMUTING DIAGRAM HERE.
 Mention Natural Transformation between Functors.
 
+I think both maybeToList and listToMaybe are
+natural transformations...
+
+natural transformation is "fmap" works the same
+whether you do it before/after to natural transformation
+
+
 but what about if we treat it as a monad?
 we don't get the same results out...
 
@@ -273,6 +432,25 @@ with exceptions?
 
 so how does it work with Maybe?
 
+-- refer to monad morphism: natural transformation that
+-- obeys additional rules - see top of:
+
+https://hackage.haskell.org/package/mmorph-1.0.9/docs/Control-Monad-Morph.html#g:5
+
+ i) return works in an "obvious" way
+
+ ii) morph $ do x <- m  =  do x <- morph m
+           f x           morph (f x)
+
+
+can we make monad morphisms [] -> Maybe and Maybe -> []
+
+I think (i) holds for both, but (ii) only holds for
+taking Maybe -> [] - because [] -> Maybe we prune off
+search paths, which may affect the head element of our
+final result - the LHS might produce a result, but the
+RHS would prune, and then search.
+
 </pre>
 
 </div>
@@ -281,6 +459,9 @@ so how does it work with Maybe?
 <h1>Day 4: Reader, Writer, State</h1>
 <h2>wiring together functions</h2>
 
+</div>
+
+<div class="handout">
 <pre>
 [] and Maybe are "data structure" monad
 
@@ -320,7 +501,9 @@ underlying monad might do something observable.
 <div class="slide">
 <h1>Day 5: Set</h2>
 <h2>these are harder than you’d first expect</h2>
+</div>
 
+<div class="handout">
 <pre>
 this is probably the first unfamiliar monad.
 
@@ -520,6 +703,9 @@ and a term "ringad" for collection-like monads)
 <div class="slide">
 <h1>Day 6: Conduit</h1>
 <h2>piping together computations</h2>
+</div>
+
+<div class="handout">
 <pre>
 Conduits let you pipe together streams of data with more
 control over resource usage than doing lazy IO.
@@ -582,7 +768,8 @@ example:
 <div class="slide">
 <h1>Day 7: Haxl</h1>
 <h2>The Reader monad, when reads are expensive</h2>
-
+</div>
+<div class="handout">
 <pre>
 
 it's a monad. but the interesting stuff happens when
@@ -672,6 +859,9 @@ For example, ZipList.
 <div class="slide">
 <h1>Day 8: LogicT</h1>
 <h2>more interesting stuff with evaluating lists</h2>
+</div>
+
+<div class="handout">
 <p>
 "A library for adding backtracking computations to any
 Haskell monad" - <a href="http://okmij.org/ftp/Computation/LogicT.pdf">LogicT.pdf</a>
@@ -816,6 +1006,9 @@ evaluation in a way that something living in [] cannot.
 <div class="slide">
 <h1>Day 9: Free</h1>
 <h2>Free monads</h2>
+</div>
+
+<div class="handout">
 back reference to Set (maybe set should be right before this and
 smooth transition in?) - capture the structure of the computation
 in a data structure - show full data type for Data.Monad.Set
@@ -835,6 +1028,9 @@ a list into anything that you can write a monoid instance for
 <div class="slide">
 <h1>Day 10:  Eff</h1>
 <h2>modular interpreters and extensible effects</h2>
+</div>
+
+<div class="handout">
 <pre>
 * alternative to monad transformers
 * compose interpreters
@@ -848,7 +1044,9 @@ implementations.
 <div class="slide">
 <h1>Day 11: Key</h1>
 <h2>safe dynamic typing</h2>
+</div>
 
+<div class="handout">
 
 
 http://www.cse.chalmers.se/~atze/papers/keymonad.pdf
@@ -861,7 +1059,9 @@ for similar stuff
 <div class="slide">
 <h1>Day 12: Cont</h1>
 <h2>continuations</h2>
+</div>
 
+<div class="handout">
 <pre>
 Continuations represent the rest of the
 program to be run.
@@ -937,23 +1137,5 @@ non-determinism wasn't good enough.
 
 
 </div>
-
-
-<div class="slide">
-<h1>example of haskell code markup</h1>
-<pre><code class="haskell">want     [ jsdir &lt;/> "all.css"
-         , jsdir &lt;/> "all.css.gz"
-         , jsdir &lt;/> "all.min.js"
-         , jsdir &lt;/> "all.min.js.gz"
-         ]
-
-"//*.min.js" %> minify
-"//*.gz" %> compress
--- NO DEPENDENCIES WRITTEN HERE!
-
-(jsdir &lt;/> "all.js") %> combineJS jsdir
-(jsdir &lt;/> "all.css") %> combineCSS jsdir 
--- OR HERE!
-</code></pre></div>
 
 </html>
