@@ -658,7 +658,28 @@ for <code>fmap</code> / <code>>>=</code> / <code>join</code>
 <p>... maybe we can put those constraints somewhere else?</p>
 </div>
 
+<div class="slide">
+<pre><code class="haskell">
+import qualified Data.Set as S
+data Set a where
+  Return :: a -> Set a
+  Prim   :: (Ord a) => S.Set a -> Set a
+  Bind   :: Set a -> (a -> Set b) -> Set b
+</code></pre>
 
+<p>A sequence of "actions" bound together, that
+we will evaluate later. Like creating an IO () value
+and then evaluating it as <code>main</code>.</p>
+<pre><code class="haskell">
+run :: (Ord a) => Set a -> S.Set a  -- can only run *some* sets
+run (Prim s) = s
+run (Return v) = S.singleton v
+-- with a singleton, we don't need constraints to make one step:
+run (Bind (Return v) f) = run (f v)
+-- and with a Prim, we know that we have the constraints needed:
+run (Bind (Prim s) f) = S.foldl' S.union S.empty (S.map (run . f) s)
+</code></pre>
+</div>
 
 <div class="handout">
 <pre>
@@ -850,6 +871,13 @@ you can have a regular set (with Ord constraint) or one of these
 special case singleton sets (without).
 
 (This is a free monad, and we'll come to those later)
+
+using "free monad" in the same way that imaginary numbers
+are constructed, sort of - imagine if we *could* construct
+a set this way... imagine if we could construct sqrt(-1)...
+but then it doesn't always make sense - we can only evaluate
+it in certain contexts.
+
 
 (btw i discovered there is a thing,
 <a href="https://blog.acolyer.org/2014/11/06/the-boom-hierarchy/">The Boom Hierarchy</a>
