@@ -659,19 +659,17 @@ for <code>fmap</code> / <code>>>=</code> / <code>join</code>
 </div>
 
 <div class="slide">
-<pre><code class="haskell">
-import qualified Data.Set as S
+<pre><code class="haskell">import qualified Data.Set as S
 data Set a where
-  Return :: a -> Set a
   Prim   :: (Ord a) => S.Set a -> Set a
+  Return :: a -> Set a
   Bind   :: Set a -> (a -> Set b) -> Set b
 </code></pre>
 
 <p>A sequence of "actions" bound together, that
 we will evaluate later. Like creating an IO () value
 and then evaluating it as <code>main</code>.</p>
-<pre><code class="haskell">
-run :: (Ord a) => Set a -> S.Set a  -- can only run *some* sets
+<pre><code class="haskell">run :: (Ord a) => Set a -> S.Set a  -- can only run *some* sets
 run (Prim s) = s
 run (Return v) = S.singleton v
 -- with a singleton, we don't need constraints to make one step:
@@ -682,6 +680,7 @@ run (Bind (Prim s) f) = S.foldl' S.union S.empty (S.map (run . f) s)
 <p>Only feed in "interesting" sets if we have Ord,
 and can only ask for the result if we have an Ord.
 </p>
+<p>Can't: <code>run (return id)</code></p>
 </div>
 
 <div class="handout">
