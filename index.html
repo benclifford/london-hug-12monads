@@ -1191,7 +1191,95 @@ For example, ZipList.
 <div class="slide">
 <h1>Day 8: LogicT</h1>
 <h2>more interesting stuff with evaluating lists</h2>
+<blockquote>A library for adding backtracking computations
+to any Haskell monad</blockquote>
+<p><a href="http://okmij.org/ftp/Computation/LogicT.pdf">LogicT.pdf</a></p>
 </div>
+
+<div class="slide">
+<h2>Unfair disjunction</h2>
+
+<pre class="haskell">
+positives = [1..]
+negatives = map (* (-1)) [1..]
+the_numbers = positives ++ [0] ++ negatives
+</pre>
+
+<p>"Search" for a number bigger than 100:</p>
+<pre class="haskell">
+a_solution = head $ do
+  n <- the_numbers
+  guard (n > 100)
+  return n
+</pre>
+
+<pre>
+print a_solution
+101
+</pre>
+</div>
+
+<div class="slide">
+
+<pre class="haskell">
+positives = [1..]
+negatives = map (* (-1)) [1..]
+the_numbers = positives ++ [0] ++ negatives
+</pre>
+
+<p>"Search" for a number smaller than 0:</p>
+<p>For example, <code>-1</code></p>
+<pre class="haskell">
+a_solution = head $ do
+  n <- the_numbers
+  guard (n < 0)
+  return n
+</pre>
+
+<pre>
+print a_solution
+... hangs ...
+</pre>
+
+</div>
+
+<div class="slide">
+<p><code>++</code> is "unfair": LHS is treated differently to RHS</p>
+
+<pre class="haskell">import Control.Monad.Logic
+the_numbers = positives `interleave` [0] `interleave` negatives
+
+a_solution = head $ do
+  n <- the_numbers
+  guard (n < 0)
+  return n
+
+print a_solution
+-1
+
+print (take 10 the_numbers)
+[1,-1,0,-2,2,-3,3,-4,4,-5]
+</pre>
+</div>
+
+<div class="slide">
+<p><code>++</code> for <code>ListT m</code></p>
+
+<pre>
+a `mplus` b = do
+  lhs <- a
+  rhs <- b
+  return (lhs ++ rhs)
+</pre>
+
+<p>What does it mean to interleave rather than ++?</p>
+<p>Interleave at the end is too late</p>
+<p>Run lhs a little bit, then run rhs a little bit, then
+run lhs a little bit more.</p>
+<p>Ramble about co-routines  - compare to conduit.</p>
+</div>
+
+
 
 <div class="handout">
 <p>
@@ -1338,7 +1426,45 @@ evaluation in a way that something living in [] cannot.
 <div class="slide">
 <h1>Day 9: Free</h1>
 <h2>Free monads</h2>
+
+<p>Already saw these a bit with set...</p>
+<p>Describe how to build a set, rather than actually building it...
+<pre><code class="haskell">data Set a where
+  Prim   :: (Ord a) => S.Set a -> Set a
+  Return :: a -> Set a
+  Bind   :: Set a -> (a -> Set b) -> Set b
+</code></pre>
+<p>.. and then interpret (<code>run</code>) that description:</p>
+<pre><code class="haskell">run :: (Ord a) => Set a -> S.Set a</code></pre>
+<p>Standard monad stuff and then some special stuff.</p>
+<p>Make a monad out of any "special stuff". Up to the interpreter
+to understand what to do with it.
+</p>
+<p>Many different interpreters for same free monad</p>
 </div>
+
+<div class="slide">
+<p><code>Control.Monad.Free</code>: "special stuff" 
+a <code>Functor</code> (<code>fmap</code>)</p>
+
+<p><monad>Freer</em> monad doesn't even need that - move
+fmap into the interpreter too.</p>
+</div>
+
+<div class="slide">
+<pre><code class="haskell">
+data FFree f a where
+  Pure :: a -> FFree f  a
+  Impure :: f x -> (x -> FFree f a) -> FFree f a
+
+data SetFF a where
+    Prim :: (Ord a) => S.Set a -> SetFF a
+
+type Set a = Free SetFF a
+</code>
+</pre>
+</div>
+
 
 <div class="handout">
 back reference to Set (maybe set should be right before this and
@@ -1360,6 +1486,13 @@ a list into anything that you can write a monoid instance for
 <div class="slide">
 <h1>Day 10:  Eff</h1>
 <h2>modular interpreters and extensible effects</h2>
+<p>Union data type and injections:</p>
+<pre><code class="haskell">type X = Either String Integer
+Left :: String -> X
+Right :: Integer -> X
+</code>
+</pre>
+
 </div>
 
 <div class="handout">
