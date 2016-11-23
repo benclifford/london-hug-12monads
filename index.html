@@ -1550,7 +1550,7 @@ or pass it down the stack.
 <p>Unlike monad transformers: interpreters can handle multiple
 types of effects</p>
 </div>
-
+</code>
 <div class="handout">
 <pre>
 * alternative to monad transformers
@@ -1561,6 +1561,24 @@ types of effects</p>
 implementations.
 </pre>
 </div>
+
+<div class="slide">
+<h1>Day 11: Key</h1>
+<h2>safe dynamic typing</h2>
+
+<p>Runtime dynamics:</p>
+
+<pre><code class="haskell">
+data Dynamic
+
+toDyn :: Typeable a => a -> Dynamic
+fromDynamic :: Typeable a => Dynamic -> Maybe a
+</code></pre>
+
+<p>Might prove to self that two uses of a Dynamic have the same type...</p>
+<p>... but that isn't checked by the type system.</p>
+</div>
+
 
 <div class="slide">
 <h1>Day 11: Key</h1>
@@ -1578,9 +1596,82 @@ writeSTRef :: STRef s a -> a -> ST s ()
 
 runST :: (forall s. ST s a) -> a </code></pre>
 <p>runST is pure!</p>
-<p><code>s</code> is magic to stop sharing references between runs</p>
+<p>(<code>s</code> is magic to stop sharing references between runs)</p>
+<p>How might we implement this?</p>
+</div>
+<div class="slide">
+<p>How might we implement this?</p>
+<pre><code class="haskell">
+type STRef = Integer
+
+readSTRef :: STRef a -> State ([STRef, Dynamic]) a
+readSTRef ref = 
+  slots <- get
+  return $ unsafeFromJust $ fromDynamic $ lookup ref slots
+</code></pre>
+<p>Runtime exception when we get the types wrong (<code>unsafeFromJust</code>)</p>
+<p><code>a</code> must be an instance of Dynamic</p>
+</div>
+
+<div class="slide">
+<p>GHC implementation uses:</p>
+<pre>
+-- See Note [Definition of runRW#] in GHC.Magic
+</pre>
 
 </div>
+
+<div class="slide">
+<p><code>Key s</code> monad still needs magic impl...</p>
+<p>... but less magic ... lower level</p>
+
+<pre><code class="haskell">newKey :: KeyM s (Key s a)
+
+testEquality :: (Key s a) -> (Key s b) -> Maybe (a :~: b)
+
+data a :~: b where
+  Refl :: a :~: a
+</code></pre>
+
+<p>Key analogous to STRef - but no stored value.</p>
+<p>Name that carries along a type at compile time.</p>
+</div>
+
+<div class="slide">
+<pre><code class="haskell">newKey :: KeyM s (Key s a)</code></pre>
+<p>Name that carries along a type at compile time.</p>
+<p>Type safe boxes:</p>
+
+<pre><code class="haskell">
+type Box s where
+  Lock :: Key s a -> a -> Box s
+
+unlock :: Key s a -> Box s -> Maybe a
+unlock k (Lock k' x) = 
+  case (testEquality k k') of
+    Nothing -> Nothing
+    Just Refl -> Just x
+</code></pre>
+</div>
+
+<div class="slide">
+<p>Safe keyed lookup table = collection of <code>Box</code>es</p>
+
+<p>Build safe <code>ST</code> from safe keyed lookup table</p>
+
+<p>But other, non-<code>ST</code> stuff too:</p>
+
+<p>arrow-like notation in <code>do</code></p>
+
+<p>variables in a syntax tree</p>
+
+<p>Common theme is passing round a "name" (runtime) value
+that has a compile time type associated with it.</p>
+</div>
+
+
+
+
 
 <div class="handout">
 
