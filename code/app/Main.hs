@@ -3,6 +3,8 @@ module Main where
 import Lib
 import Control.Monad.Cont
 
+import Data.Conduit
+
 main :: IO ()
 main = do
   runContT contMain (return)

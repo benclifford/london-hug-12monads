@@ -890,6 +890,83 @@ and a term "ringad" for collection-like monads)
 <div class="slide">
 <h1>Day 6: Conduit</h1>
 <h2>piping together computations</h2>
+
+<p>Co-routines</p>
+<p>Better resource management - eg constant space</p>
+<p>Pass values down a pipe</p>
+<p><pre>source .| conduit .| conduit .| sink</pre></p>
+
+</div>
+
+<div class="slide">
+<pre>
+source = do
+  liftIO $ putStrLn "Starting stage 1 in source"
+  yield 1
+  yield 2
+  liftIO $ putStrLn "Starting stage 2 in source"
+  sourceList [100..200]
+
+sink :: ConduitM Integer Void IO
+sink :: Sink Integer IO ()
+sink = do
+  liftIO $ putStrLn "Starting sink"
+  v <- await
+  liftIO $ putStrLn $ "sink got: " ++ (show v)
+</pre>
+
+<pre>
+> runConduit (source .| sink)
+Starting sink
+Starting stage 1 in source
+sink got: Just 1
+</pre>
+
+</div>
+
+<div class="slide">
+<pre>
+somefilter :: ConduitM Integer Integer IO ()
+somefilter = do
+  liftIO $ putStrLn "filter: awaiting"
+  v <- await
+  case v of
+    Nothing -> do
+      liftIO $ putStrLn "filter: reached end of stream"
+    Just v | v > 102 -> do
+      liftIO $ putStrLn "filter: passing on value"
+      yield v
+      somefilter
+    Just v -> do
+      liftIO $ putStrLn $ "filter: skipping value: " ++ (show v)
+      somefilter
+</pre>
+
+<pre>
+> runConduit (source .| somefilter .| sink)
+Starting sink
+filter: awaiting
+Starting stage 1 in source
+filter: skipping value: 1
+filter: awaiting
+filter: skipping value: 2
+filter: awaiting
+Starting stage 2 in source
+filter: skipping value: 100
+filter: awaiting
+filter: skipping value: 101
+filter: awaiting
+filter: skipping value: 102
+filter: awaiting
+filter: passing on value
+sink got: Just 103
+</pre>
+</div>
+
+<div class="handout">
+<pre>
+
+
 <pre><code class="haskell">data ConduitM input output m result</code></pre>
 <p>Source:</p>
 <pre><code class="haskell">ConduitM () output m ()</code></pre>
@@ -897,10 +974,8 @@ and a term "ringad" for collection-like monads)
 <pre><code class="haskell">ConduitM input Void m result</code></pre>
 </code></pre>
 
-</div>
 
-<div class="handout">
-<pre>
+
 Conduits let you pipe together streams of data with more
 control over resource usage than doing lazy IO.
 
