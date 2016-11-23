@@ -1488,11 +1488,67 @@ a list into anything that you can write a monoid instance for
 <h2>modular interpreters and extensible effects</h2>
 <p>Union data type and injections:</p>
 <pre><code class="haskell">type X = Either String Integer
+
+-- injections
 Left :: String -> X
 Right :: Integer -> X
-</code>
-</pre>
 
+-- partial projections
+left :: X -> Maybe String
+right :: X -> Maybe Integer
+</code>
+
+</pre>
+</div>
+
+<div class="slide">
+<h1>Open union</h1>
+<p><code>X</code> does not have to be a fixed list of types</p>
+
+<pre><code class="haskell">type Union r a</code></pre>
+
+<pre><code class="haskell">
+inj :: t a -> Union r a
+prj :: Union r a -> Maybe (t a)
+</code></pre>
+
+<p><code>r</code> is a list of types...
+<code>Union '[Foo, Bar, Baz] a</code>
+</p>
+<p>Can <code>inj</code> and <code>prj</code> all three
+of those types</p>
+
+</div>
+
+<div class="slide">
+<h1>Free monad + Open Unions =</h1>
+
+<p>(something like this... fiddled with...)</p>
+<pre>
+type Eff r v = FFree (Union r) v
+</pre>
+<p>A free monad where we can specify a whole list of
+different special fillings - the <em>effects</em>.
+</p>
+
+</div>
+
+<div class="slide">
+<h1>Extensible interpreters</h1>
+<p>Free monad needs an interpreter... but what interpreter
+can interpret an arbitrary list of effects?</p>
+
+<p>Modular interpreter: similar to but different from
+monad transformers</p>
+
+<p>When it's time to interpret an effect, a stack of interpreters
+is consulted - each being given the chance to handle the effect
+or pass it down the stack.
+</p>
+<p>All effects interpreted by base of stack</p>
+
+<p>Unlike monad transformers: interpreters can handle multiple
+types of effects</p>
 </div>
 
 <div class="handout">
@@ -1509,6 +1565,21 @@ implementations.
 <div class="slide">
 <h1>Day 11: Key</h1>
 <h2>safe dynamic typing</h2>
+
+<p><code>IO</code> monad:</p>
+<pre><code class="haskell">newIORef :: a -> IO (IORef a)
+readIORef :: IORef a -> IO a
+writeIORef :: IORef a -> a -> IO () </code></pre>
+
+<p><code>St s</code> monad:</p>
+<pre><code class="haskell">newSTRef :: a -> ST s (STRef s a)
+readSTRef :: STRef s a -> ST s a 
+writeSTRef :: STRef s a -> a -> ST s () 
+
+runST :: (forall s. ST s a) -> a </code></pre>
+<p>runST is pure!</p>
+<p><code>s</code> is magic to stop sharing references between runs</p>
+
 </div>
 
 <div class="handout">
