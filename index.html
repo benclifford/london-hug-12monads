@@ -1686,6 +1686,101 @@ for similar stuff
 <div class="slide">
 <h1>Day 12: Cont</h1>
 <h2>continuations</h2>
+
+<p>Continuations represent the rest of the
+program to be run.</p>
+<p>But wait... monads already do this</p>
+
+<pre>action >>= rest_of_program</pre>
+<p><code>Cont</code> exposes <code>rest_of_program</code> to
+the monadic code.<p>
+</div>
+<div class="slide">
+<p><p>Cont</code> monad provides:
+<pre><code class="haskell">callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
+</code></pre>
+
+<pre><code class="haskell">callCC func :: Cont r a</code></pre>
+<p> ... calls func, passing in a continuation ... </p>
+<pre><code class="haskell">func :: ((a -> Cont r b) -> Cont r a)
+func k = do ...
+
+k :: a -> Cont r b
+</code></pre>
+<p> ... and inside func we can invoke k to return back from callCC (!)</p>
+</div>
+
+<div class="slide">
+<p>Early return:</p>
+<pre><code class="haskell">
+main :: IO ()
+main = do
+  runContT contMain (return)
+
+contMain :: ContT () IO ()
+contMain = do
+  trace "contMain starting"
+  y <- callCC funcB
+  trace $ "contMain: funcB returned " ++ show y
+
+funcB return' = do
+  trace "funcB - inside"
+  return' 7
+  trace "funcB - part 2"
+  return 10
+</code></pre>
+
+<pre>
+contMain starting
+funcB - inside
+contMain: funcB returned 7
+</pre>
+</div>
+
+<div class="slide">
+<p>Early returns from anywhere,
+like exceptions</p>
+<pre><code class="haskell">
+main :: IO ()
+main = do
+  runContT contMain (return)
+
+contMain :: ContT () IO ()
+contMain = do
+  trace "contMain starting"
+  z <- callCC funcC
+  trace $ "contMain: funcC returned " ++ show z
+
+funcC return' = do
+  trace "funcC - inside"
+  funcC2 return'
+  trace "funcC - step 2"
+  return 20
+
+funcC2 return' = do
+  trace "funcC2 - inside"
+  return' 21
+  trace "funcC2 - step 2"
+</code></pre>
+<pre>
+contMain starting
+funcC - inside
+funcC2 - inside
+contMain: funcC returned 21
+</pre>
+</div>
+
+<div class="slide">
+<p>Can implement:</p>
+<ul>
+<li>Co-routines / co-operative multitasking</li>
+<li>Non-determinism - call same continuation multiple times</li>
+<li>Exception-style control flow</li>
+</ul>
+<p>But very difficult to get head around. Often better off writing
+a monad (transformer) that captures the specific kind of effect you
+want.</p>
+
 </div>
 
 <div class="handout">
