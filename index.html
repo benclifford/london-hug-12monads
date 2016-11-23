@@ -1037,7 +1037,70 @@ example:
 <div class="slide">
 <h1>Day 7: Haxl</h1>
 <h2>The Reader monad, when reads are expensive</h2>
+
+<p>Reader:
+<pre>
+  do
+    v <- ask
+    v' = get_field v
+</pre>
+<p>But <code>ask</code> might be expensive...</p>
+<p>Big - send queries to data store rather than
+   processing locally</p>
+<p>Slow</p>
+<p>Starts to sound like IO?</p>
+<p>Claim: still Reader-like. <code>m >> n == n</code></p>
+
 </div>
+
+<div class="slide">
+<p>Queries have no effect on the environment: <code>m >> n == n</code></p>
+
+<p>If we know several queries, can run:
+<ul>
+ <li>In any order</li>
+ <li>In parallel</li>
+</ul>
+</p>
+
+<p>But monad forces sequencing even if not needed...</p>
+<pre>
+m >>= \_ -> n
+</pre>
+<p>Must run query <code>m</code> in order to get a value <code>_</code>
+to ignore.
+<pre>
+m >>= \x -> n >>= \y -> return (x,y)
+</pre>
+<p>Values might be needed, but not until later.</p>
+</div>
+
+<div class="slide"><h1>Applicatives</h1>
+<p><code>Applicative</code> to the rescue</p>
+
+<p> <code>>>=</code> but weaker</p>
+<p>Actions never see earlier values</p>
+
+<pre>&lt;*> :: m (a -> b) -> m a -> m b
+lhs &lt;*> rhs = do
+  f <- lhs
+  v <- rhs
+  return (f v)
+</pre>
+
+<p>or</p>
+
+<pre>** :: m a -> m b -> m (a,b)
+lhs ** rhs = do
+  a <- lhs
+  b <- rhs
+  return (a,b)
+</pre>
+
+<p>ApplicativeDo notation - desugars into <*> where possible and >>= where not</p>
+
+</div>
+
 <div class="handout">
 <pre>
 
