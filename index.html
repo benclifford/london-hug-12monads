@@ -890,6 +890,13 @@ and a term "ringad" for collection-like monads)
 <div class="slide">
 <h1>Day 6: Conduit</h1>
 <h2>piping together computations</h2>
+<pre><code class="haskell">data ConduitM input output m result</code></pre>
+<p>Source:</p>
+<pre><code class="haskell">ConduitM () output m ()</code></pre>
+<p>Sink:</p>
+<pre><code class="haskell">ConduitM input Void m result</code></pre>
+</code></pre>
+
 </div>
 
 <div class="handout">
