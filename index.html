@@ -1869,6 +1869,11 @@ notes from actual talk:
 similarity between Conduit yields/awaits and LogicT asking "list-like" processes for next element.
 though logict exposes the continuation to the monadic code and conduit doesn't.
 
+note that when we pick a function to use when disproving monad morphism law,
+I think it has to do something "monady" - changing its behaviour based on supplide
+value in a way that an fmappable function doesn't. (eg an fmappable function can't
+change a Just to a Nothing, or change the number of elements in a list)
+
 
 </pre>
 </div>
