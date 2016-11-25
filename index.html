@@ -1913,6 +1913,12 @@ I think unique suppy and key both satisfy the "reader law" that I
 put in earlier? different numbers of keys are allocated, but
 that is nothing you can observe.
 
+for logicT note that for lists we can "introspect" on a computation inside the list monad:
+ we can say   x = [1,2,3]   rather than x <- [1,2,3] 
+   and do things to x other than map the rest of the program over it.
+   for example, we can `length` or `takeN`  or   x <- (take n [1,2,3)
+   -- stuff that is difficult to do in a ListT style environment.
+
 </pre>
 </div>
 
