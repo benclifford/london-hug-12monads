@@ -24,6 +24,7 @@ library
                      , logict
                      , mtl
                      , QuickCheck
+                     , deepseq
   default-language:    Haskell2010
 
 executable code-exe

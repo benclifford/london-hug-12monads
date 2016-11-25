@@ -1905,6 +1905,14 @@ unsafeCoerce :: a -> b
 https://hackage.haskell.org/package/ghc-prim-0.5.0.0/docs/GHC-Prim.html#v:unsafeCoerce-35-
 "If you use this function, you had better get it right, otherwise segmentation faults await. It is generally used when you want to write a program that you know is well-typed, but where Haskell's type system is not expressive enough to prove that it is well typed."
 
+why does unique supply need to be a monad? because
+what it gives out "the same action" each time, but the results
+differ.
+
+I think unique suppy and key both satisfy the "reader law" that I
+put in earlier? different numbers of keys are allocated, but
+that is nothing you can observe.
+
 </pre>
 </div>
 
