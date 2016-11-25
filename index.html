@@ -1877,6 +1877,16 @@ change a Just to a Nothing, or change the number of elements in a list)
 when quickcheck gives the example case, write out a step by step evaluation of both ways to
 show where the branch pruning happens.
 
+in examples, dont' use callCC - instead use ContT directly to emphasise no automatic execution of rest of program (because callCC does go back to run rest of program...)
+maybe actually come up with an interesting example for eg contuation-passing-style? can demo what liftIO does - it continues automatically. (show liftIO impl or basic one at least). and maybe some kind of producer/yield thing?
+
+key: monad similar to unique supply - but the keys are somehow more interesting at the type level.
+:~: is at value level apparently the same as () -- there's one constructor. again, more interesting at the type level.
+in both cases, could project a lot of this down: keys to == forgeting the refl; refl to (); in both cases losing the compile time
+type-checking stuff.
+note the subtle interaction of whats happening at run time and type checking time - don't know what the types will definitely
+be at run time, but do know if you go down a particular path, they will match certain rules.
+
 </pre>
 </div>
 
