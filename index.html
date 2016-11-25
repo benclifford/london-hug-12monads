@@ -1893,6 +1893,18 @@ Dynamic we need Dynamic typeclass constraint; on open union we need explicit lis
 this is interesting mostly because they are presented in successive days.
 
 
+use do
+  name <- getline 
+  putStr "your name is"
+  putStrLn name
+as a better example, becausee it has two monadic steps on the rest_of_the_program
+
+mention:
+unsafeCoerce :: a -> b 
+
+https://hackage.haskell.org/package/ghc-prim-0.5.0.0/docs/GHC-Prim.html#v:unsafeCoerce-35-
+"If you use this function, you had better get it right, otherwise segmentation faults await. It is generally used when you want to write a program that you know is well-typed, but where Haskell's type system is not expressive enough to prove that it is well typed."
+
 </pre>
 </div>
 
